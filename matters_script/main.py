@@ -53,8 +53,8 @@ auth_body = urllib.parse.urlencode({
     'grant_type': 'password',
     'client_id': '098d18f0-586f-413b-8bd2-fc8f2ff5cb46',
     'client_secret': '1dec4003-0a4b-4703-906d-85ac9f332c31',
-    'username' : f'CloudAdmin@olajideoyewole.com',
-    'password' : f'/Cg3Y+kZ(W298@',
+    'username' : f'wmarita@mkenga.dev.com',
+    'password' : f'Mc=\EGZ$S#764$',
 })
 
 auth_request_params = Token(token_url=auth_url,token_headers=auth_headers,token_data=auth_body)
@@ -76,6 +76,7 @@ class Client_ID:
         library_request = requests.request("GET", url=self.client_id_url, headers=self.client_id_header)
         library_response = library_request.json()
         library_list = library_response['data']['work']['libraries']
+        print(library_list[0]['alias'])
         return library_list[0]['alias']
         # return 'legal_cabinet_legal_drive'
 
@@ -164,10 +165,11 @@ class Matters:
             matter_key = x['id']
             matter_description = x['description']
             client_key = x['parent']['id']
+            unique_key = f'{client_key}.{matter_key}'
             print(ssid,matter_key,matter_description,client_key)
 
-            sql_script = 'INSERT IGNORE INTO matters (ssid, matter_key, matter_description, client_key) VALUES (%s, %s, %s, %s)'
-            values = (ssid, matter_key, matter_description, client_key)
+            sql_script = 'INSERT IGNORE INTO matters (ssid, matter_key, matter_description, client_key,unique_key) VALUES (%s, %s, %s, %s, %s)'
+            values = (ssid, matter_key, matter_description, client_key, unique_key)
             cursor.execute(sql_script, values)
             connection.commit()
             print(cursor.rowcount, "Matter inserted.")
@@ -186,9 +188,10 @@ custom2_request_params = urllib.parse.urlencode({
 #
 custom2_request = Matters(custom2_url=custom2_request_url,custom2_headers=custom2_request_header,custom2_params=custom2_request_params)
 custom2_request.get_matters()
-
+#
 
 #Library Workspaces.
+
 
 class Workspaces:
     def __init__(self,workspace_url,workspace_header):
@@ -200,11 +203,13 @@ class Workspaces:
             workspace_request = requests.request("GET",url=self.workspace_url,headers=self.workspace_header)
             workspace_response = workspace_request.json()
             workspace_data = workspace_response['data']['results']
-            # print(len(workspace_data))
+            print(len(workspace_data))
             # return True
 
             # return print(workspace_data)
+
             for workspace in workspace_data:
+
                 if 'create_date' not in workspace:
                     create_date = ''
                 else:
@@ -246,11 +251,18 @@ class Workspaces:
                     no_of_documents = ''
                 else:
                     no_of_documents = int(workspace['document_number'])
+                if 'custom2_description' not in workspace:
+                    matter_description = ''
+                else:
+                    matter_description = workspace['custom2_description']
+
+
+
 
                 # print(create_date,database,security)
 
-                workspace_sql_script = 'INSERT IGNORE INTO Workspaces (workspace_id,workspace_name,library,owner,security,created_date,client_key,matter_key,practice_area_key,total_documents) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'
-                workspace_values = (workspace_id,workspace_name,database,owner,security,create_date,client_key,matter_key,practice_area,no_of_documents)
+                workspace_sql_script = 'INSERT IGNORE INTO Workspaces (workspace_id,workspace_name,library,owner,security,created_date,client_key,matter_key,matter_description,practice_area_key,total_documents) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'
+                workspace_values = (workspace_id,workspace_name,database,owner,security,create_date,client_key,matter_key,matter_description,practice_area,no_of_documents)
                 connection = mysql.connector.connect(
                     host='localhost',
                     user='root',
@@ -261,7 +273,12 @@ class Workspaces:
 
                 mycursor.execute(workspace_sql_script,workspace_values)
                 connection.commit()
+
+
                 print(mycursor.rowcount, " workspace record inserted.")
+            return True
+
+
 
 
 
@@ -281,4 +298,3 @@ workspaces_request_headers = ({
 workspace_request = Workspaces(workspace_url=workspace_request_url,workspace_header=workspaces_request_headers)
 workspace_request.get_workspaces()
 
-x =2
